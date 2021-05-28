@@ -1,10 +1,10 @@
 import time
-from github_actions_api import list_runners, infos_runners, create_runner_token
+from github_actions_api import list_runners, get_runners, create_runner_token
 from vm_creation.openstack import create_vm
 
 if __name__ == '__main__':
     org = 'scalanga-devl'
-    infos_runners(org)
+    get_runners(org)
     print('-----------------------------------')
     start_time = round(time.time())
     create_token = create_runner_token(org)

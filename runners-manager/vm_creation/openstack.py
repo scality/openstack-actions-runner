@@ -44,7 +44,7 @@ nohup sudo -H -u actions bash -c '/home/actions/actions-runner/run.sh --once 2> 
 """ # noqa
 
 
-def create_vm(name, runner_token):
+def create_vm(name: str, runner_token: int):
     """
     Create a small vm base on  CentOS-7-x86_64-GenericCloud-latest , with my sshkey
     :param name:
@@ -58,7 +58,7 @@ def create_vm(name, runner_token):
     # print(script_init_runner(name, runner_token, ['centos'], 'default'))
     # print("----------------------------")
     instance = nova_client.servers.create(
-        name=name, image='dcfbc223-d658-4077-a517-5f29984258a6',
+        name=name, image=nova_client.glance.find_image('CentOS 7 (PVHVM)'),
         flavor=nova_client.flavors.find(name='m1.small'), key_name='laptot',
         security_groups=[sec_group_id], nics=[nic],
         userdata=script_init_runner(name, runner_token, ['centos'], 'default'))

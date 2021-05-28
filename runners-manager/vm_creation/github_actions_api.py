@@ -10,7 +10,7 @@ HEADERS = {
 }
 
 
-def link_download_runner(org, archi='x64'):
+def link_download_runner(org: str, archi='x64'):
     download_link = f'https://api.github.com/orgs/{org}/actions/runners/downloads'
     return next(
         elem
@@ -19,20 +19,20 @@ def link_download_runner(org, archi='x64'):
     )
 
 
-def infos_runners(org):
+def get_runners(org: str):
     print(HEADERS)
     info_link = f'https://api.github.com/orgs/{org}/actions/runners'
     return requests.get(info_link, headers=HEADERS).json()
 
 
-def list_runners(org):
+def list_runners(org: str):
     list_link = f'https://api.github.com/orgs/{org}/actions/runners'
     response = requests.get(list_link, headers=HEADERS)
     pprinter.pprint(response.json())
     return response.json()
 
 
-def create_runner_token(org):
+def create_runner_token(org: str):
     """
     Create  a token used as paramert of the github action script start,
     this token is available one hour.
@@ -46,7 +46,7 @@ def create_runner_token(org):
     return response['token']
 
 
-def force_delete_runner(org, runner_id):
+def force_delete_runner(org: str, runner_id: int):
     runner_link = f'https://api.github.com/orgs/{org}/actions/runners/{runner_id}'
     response = requests.delete(runner_link, headers=HEADERS)
 
