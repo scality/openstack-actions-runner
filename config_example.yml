@@ -8,7 +8,7 @@ cloud_nine_tenant: ""
 # The python module, used for configuration
 # example:
 #  'runners_manager.settings.settings_local'
-python_config:
+python_config: 'runners_manager.settings.settings_local'
 
 # Represent the infos about each group of runners
 # Define by:
@@ -26,3 +26,9 @@ python_config:
 #        - centos7
 #        - small
 runner_pool: []
+
+# If the number of runners is greater than `min`
+# after x min / hours it will delete them to return to min number
+extra_runner_timer:
+  minutes: 10
+  hours: 0

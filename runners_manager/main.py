@@ -21,7 +21,7 @@ def maintain_number_of_runner(runner_m: RunnerManager):
         logger.debug(runners)
         runner_m.update(runners['runners'])
 
-        time.sleep(5)
+        time.sleep(10)
 
 
 def main(settings: dict, args: argparse.Namespace):
@@ -33,7 +33,5 @@ def main(settings: dict, args: argparse.Namespace):
                                          region=settings['cloud_nine_region'])
     github_manager = GithubManager(organization=settings['github_organization'],
                                    token=args.github_token)
-    runner_m = RunnerManager(settings['github_organization'],
-                             settings['runner_pool'],
-                             openstack_manager, github_manager)
+    runner_m = RunnerManager(settings, openstack_manager, github_manager)
     maintain_number_of_runner(runner_m)

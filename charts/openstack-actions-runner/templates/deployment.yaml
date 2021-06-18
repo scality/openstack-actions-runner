@@ -30,7 +30,7 @@ spec:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        command: ["python3", "/app/start.py"]
+        command: ["runner-manager"]
         args: ["--settings-file", "/app/config/settings.yml"]
         resources:
           {{- toYaml .Values.resources | nindent 12 }}

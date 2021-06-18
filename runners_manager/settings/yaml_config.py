@@ -5,6 +5,11 @@ from marshmallow import Schema, fields
 from runners_manager.settings.exceptions import SettingsFileNotFound, IncorrectSettingsFile
 
 
+class ExtraRunnerTimer(Schema):
+    minutes = fields.Int()
+    hours = fields.Int()
+
+
 class RunnerQuantity(Schema):
     min = fields.Int()
     max = fields.Int()
@@ -14,7 +19,7 @@ class RunnerPool(Schema):
     tags = fields.List(fields.Str(), required=True)
     flavor = fields.Str(required=True)
     image = fields.Str(required=True)
-    quantity = fields.Nested(RunnerQuantity)
+    quantity = fields.Nested(RunnerQuantity, required=True)
 
 
 class Settings(Schema):
@@ -23,6 +28,7 @@ class Settings(Schema):
     cloud_nine_tenant = fields.Str(required=True)
     runner_pool = fields.Nested(RunnerPool, many=True, required=True)
     python_config = fields.Str(required=True)
+    extra_runner_timer = fields.Nested(ExtraRunnerTimer, required=True)
 
 
 def setup_settings(settings_file: str) -> dict:

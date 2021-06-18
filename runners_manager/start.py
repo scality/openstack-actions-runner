@@ -10,17 +10,17 @@ def setup_parser():
                                      description='Start and manage github self-host runners')
 
     parser.add_argument(
-        'settings-file',
+        '--settings-file',
         default='setting.yaml',
         help="Path to project settings file")
     parser.add_argument(
-        'github-token',
+        '--github-token',
         default=os.getenv('GITHUB_TOKEN'),
         help="Token for github API calls",
     )
     parser.add_argument(
         '--cloud-nine-user',
-        default=os.getenv('CLOUD_NINE_USER'),
+        default=os.getenv('CLOUD_NINE_USERNAME'),
         help="User for cloud nine connection  (Goes with password)")
     parser.add_argument(
         '--cloud-nine-password',
@@ -37,8 +37,7 @@ def start():
     parser = setup_parser()
     args = parser.parse_args()
     if not(args.cloud_nine_user and args.cloud_nine_password) and not args.cloud_nine_token:
-        raise argparse.ArgumentError(args.cloud_nine_token,
-                                     'You should have infos for openstack / cloud nine connection')
+        raise parser.error('You should have infos for openstack / cloud nine connection')
 
     settings = setup_settings(args.settings_file)
     main(settings, args)

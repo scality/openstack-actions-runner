@@ -1,27 +1,30 @@
+import datetime
+import logging
+
 from runners_manager.runner.VmType import VmType
+
+logger = logging.getLogger("runner_manager")
 
 
 class Runner(object):
     name: str
+    started_at: datetime.datetime or None
     status: str
     status_history: list[str]
-    has_child: bool
 
-    parent_name: str or None
     action_id: int or None
     vm_id: str or None
     vm_type: VmType
 
-    def __init__(self, name: str, vm_id: str, vm_type: VmType, parent_name=None):
+    def __init__(self, name: str, vm_id: str or None, vm_type: VmType):
         self.name = name
         self.vm_id = vm_id
         self.vm_type = vm_type
-        self.parent_name = parent_name
 
         self.status = 'offline'
         self.status_history = []
         self.action_id = None
-        self.has_child = False
+        self.started_at = None
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -41,8 +44,15 @@ class Runner(object):
         if self.status == status:
             return
 
+        if self.status == 'offline' and status != 'offline':
+            self.started_at = datetime.datetime.now()
+
         self.status_history.append(self.status)
         self.status = status
+
+    @property
+    def time_online(self):
+        return datetime.datetime.now() - self.started_at
 
     @property
     def has_run(self) -> bool:
