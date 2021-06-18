@@ -19,6 +19,7 @@ Resulting in a job that never starts, blocks the runner and the job from beeing 
 ## How to avoid this error
 A solution could be to always use the same runners from GitHub Actions point of view, but on a fresh VM each time. If we save the self-hosted root directory and put it on a new VM, Github will consider it as the same runner. 
 And it will run the job that Github attached him just before shut down, and avoid any error.
+Using `--replace` look's like a good solution too, it replace the runner with a new one. And the job will run on just created runner.
 
 For infos here are file created by the self-hosted script, one after the other, we could use this info to save only config file. But ! These files are not meant to by managed by us, so if Github change anything, it could break the runner manager.
 ![image](./assets/created_file_durring_installation.png)

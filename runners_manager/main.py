@@ -21,7 +21,7 @@ def maintain_number_of_runner(runner_m: RunnerManager):
         logger.debug(runners)
         runner_m.update(runners['runners'])
 
-        time.sleep(5)
+        time.sleep(10)
 
 
 def main(settings: dict, args: argparse.Namespace):

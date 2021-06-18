@@ -6,7 +6,12 @@ from runners_manager.runner.Runner import Runner
 from runners_manager.runner.VmType import VmType
 
 
-class TestSum(unittest.TestCase):
+class ObjectId(object):
+    def __init__(self, id):
+        self.id = id
+
+
+class TestRunnerManager(unittest.TestCase):
     @patch('runners_manager.vm_creation.github_actions_api.GithubManager')
     @patch('runners_manager.vm_creation.openstack.OpenstackManager')
     def setUp(self, return_github_manager, return_openstack_manager) -> None:
@@ -18,7 +23,8 @@ class TestSum(unittest.TestCase):
 
         self.openstack_manager = MagicMock()
         self.openstack_manager.script_init_runner.return_value = ''
-        self.openstack_manager.create_vm.return_value = 1
+        self.openstack_manager.create_vm.return_value = ObjectId('str')
+        self.openstack_manager.create_vm_volume.return_value = ObjectId('str'), ObjectId('str')
         self.openstack_manager.delete_vm.return_value = None
 
         return_github_manager.return_value = self.github_manager
@@ -59,7 +65,7 @@ class TestSum(unittest.TestCase):
     def test_config_vm_type(self, name_generator: Mock,
                             delete_runner: Mock):
         name_generator.side_effect = ['0', '1', '2', '3']
-        self.openstack_manager.create_vm.side_effect = ['1', '2', '3']
+        self.openstack_manager.create_vm.side_effect = [ObjectId('1'), ObjectId('2'), ObjectId('3')]
         r = RunnerManager('test', [{
             'tags': ['centos7', 'small'],
             'flavor': 'm1.small',
@@ -74,8 +80,9 @@ class TestSum(unittest.TestCase):
         self.assertEqual(r.runner_management.__len__(), 1)
 
         self.assertEqual(r.runners.__len__(), 2)
-        self.assertEqual(r.runners['0'], Runner('0', '1', r.runner_management[0]))
-        self.assertEqual(r.runners['1'].__dict__, Runner('1', '2', r.runner_management[0]).__dict__)
+        self.assertEqual(r.runners['0'], Runner('0', '1', r.runner_management[0], None))
+        self.assertEqual(r.runners['1'].__dict__,
+                         Runner('1', '2', r.runner_management[0], None).__dict__)
         self.assertEqual(r.runner_counter, 2)
         self.github_manager.create_runner_token.assert_called()
         self.openstack_manager.create_vm.assert_called()
@@ -83,7 +90,7 @@ class TestSum(unittest.TestCase):
     @patch('runners_manager.runner.RunnerManager.RunnerManager.generate_runner_name')
     def test_update_runner(self, name_generator: Mock):
         name_generator.side_effect = ['0', '1', '2']
-        self.openstack_manager.create_vm.side_effect = ['1', '2', '3']
+        self.openstack_manager.create_vm.side_effect = [ObjectId('1'), ObjectId('2'), ObjectId('3')]
         r = RunnerManager('test', [{
             'tags': ['centos7', 'small'],
             'flavor': 'm1.small',
@@ -124,8 +131,8 @@ class TestSum(unittest.TestCase):
             'busy': False
         }])
         self.assertEqual(r.runners['0'].action_id, 0)
-        self.assertEqual(r.runners['0'].has_run, True)
-        self.openstack_manager.delete_vm.assert_not_called()
+        self.assertEqual(r.runners['0'].has_run, False)
+        self.openstack_manager.delete_vm.assert_called()
         self.openstack_manager.create_vm.assert_called()
 
         self.openstack_manager.create_vm.reset_mock()
@@ -149,3 +156,57 @@ class TestSum(unittest.TestCase):
         }])
         self.openstack_manager.delete_vm.assert_not_called()
         self.openstack_manager.create_vm.assert_not_called()
+
+    @patch('runners_manager.runner.RunnerManager.RunnerManager.generate_runner_name')
+    def test_need_new_runner_current_updated(self, mock_naming):
+        mock_naming.side_effect = ['0', '1', '2']
+        type_dict = {
+            'tags': ['centos7', 'small'],
+            'flavor': 'm1.small',
+            'image': 'CentOS 7 (PVHVM)',
+            'quantity': {
+                'min': 2,
+                'max': 4
+            },
+        }
+        vm_type = VmType(type_dict)
+        r = RunnerManager('test', [type_dict], self.openstack_manager, self.github_manager)
+        self.assertEqual(r.need_new_runner(vm_type), False)
+
+        r.runners['0'].status_history = ['online']
+        r.runners['0'].status = 'running'
+        self.assertEqual(r.need_new_runner(vm_type), True)
+
+        r.runners['0'].status_history = ['online', 'running']
+        r.runners['0'].status = 'offline'
+        self.assertEqual(r.need_new_runner(vm_type), True)
+
+        r.runners['0'].status_history = ['online', 'running']
+        r.runners['0'].status = 'offline'
+        self.assertEqual(r.need_new_runner(vm_type), True)
+
+        r.runners['0'].status_history = ['online']
+        r.runners['0'].status = 'running'
+        r.runners['1'].status_history = ['online']
+        r.runners['1'].status = 'running'
+        self.assertEqual(r.need_new_runner(vm_type), True)
+
+    @patch('runners_manager.runner.RunnerManager.RunnerManager.generate_runner_name')
+    def test_need_new_runner_current_full(self, mock_naming):
+        mock_naming.side_effect = ['0', '1', '2', '3', '4']
+        type_dict = {
+            'tags': ['centos7', 'small'],
+            'flavor': 'm1.small',
+            'image': 'CentOS 7 (PVHVM)',
+            'quantity': {
+                'min': 4,
+                'max': 4
+            },
+        }
+        vm_type = VmType(type_dict)
+        r = RunnerManager('test', [type_dict], self.openstack_manager, self.github_manager)
+        self.assertEqual(r.need_new_runner(vm_type), False)
+
+        r.runners['0'].status_history = ['online']
+        r.runners['0'].status = 'running'
+        self.assertEqual(r.need_new_runner(vm_type), False)

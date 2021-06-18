@@ -10,11 +10,11 @@ def setup_parser():
                                      description='Start and manage github self-host runners')
 
     parser.add_argument(
-        'settings-file',
+        '--settings-file',
         default='setting.yaml',
         help="Path to project settings file")
     parser.add_argument(
-        'github-token',
+        '--github-token',
         default=os.getenv('GITHUB_TOKEN'),
         help="Token for github API calls",
     )

@@ -1,3 +1,4 @@
+import datetime
 import logging
 from collections.abc import Callable
 
@@ -38,6 +39,7 @@ class RunnerManager(object):
                 self.create_runner(t)
 
     def update(self, github_runners: list[dict]):
+        # Update status of each runner
         for elem in github_runners:
             runner = self.runners[elem['name']]
             runner.update_status(elem)
@@ -45,6 +47,7 @@ class RunnerManager(object):
             if runner.action_id is None:
                 runner.action_id = elem['id']
 
+        # runner logic For each type of VM
         for vm_type in self.runner_management:
             current_online = len(
                 self.filter_runners(vm_type, lambda r: not r.has_run and r.action_id)
@@ -59,19 +62,30 @@ class RunnerManager(object):
             logger.debug('Offline runners')
             logger.debug(','.join([f"{elem.name} {elem.status}" for elem in offlines]))
 
+            # Always Respawn Vm
+            for r in offlines:
+                self.respawn_replace(r)
+
+            # Create if it's still not enough
             while self.need_new_runner(vm_type):
                 self.create_runner(vm_type)
 
-            if current_online > 0 and len(offlines) > 0:
-                for elem in offlines:
-                    self.delete_runner(elem)
+            # Delete if you have to many
+            # if we can't delete the runner because of Github respawn it and try the next time ?
+
+            if current_online > 0:
+                for elem in self.filter_runners(vm_type, lambda r: r.status == 'online'):
+                    if datetime.datetime.now() - elem.started_at > datetime.timedelta(hours=2):
+                        self.delete_runner(elem)
 
     def need_new_runner(self, vm_type: VmType):
-        current_online_or_creating = self.filter_runners(vm_type, lambda r: not r.has_run).__len__()
-        current_running = self.filter_runners(vm_type, lambda r: r.status == 'running').__len__()
+        current_online_or_creating = len(
+            self.filter_runners(vm_type, lambda r: not r.has_run and not r.status == 'running')
+        )
+        current_running = len(self.filter_runners(vm_type, lambda r: r.status == 'running'))
 
-        return current_online_or_creating - current_running < vm_type.quantity['min'] and \
-            current_online_or_creating < vm_type.quantity['max']
+        return current_online_or_creating < vm_type.quantity['min'] and \
+            current_running + current_online_or_creating < vm_type.quantity['max']
 
     def filter_runners(self, vm_type: VmType, cond: Callable[[Runner], bool] or None = None):
         if cond:
@@ -84,24 +98,59 @@ class RunnerManager(object):
             self.runners.values()
         ))
 
-    def create_runner(self, vm_type: VmType, parent=None):
+    def create_runner(self, vm_type: VmType):
         logger.info(f"Create new runner for {vm_type}")
         name = self.generate_runner_name(vm_type)
-        parent_name = parent.name if parent else None
         installer = self.github_manager.link_download_runner()
-        vm_id = self.openstack_manager.create_vm(
-            name=name,
+        runner = Runner(name=name, vm_id=None, volume_id=None, vm_type=vm_type)
+
+        vm = self.openstack_manager.create_vm(
+            runner=runner,
             runner_token=self.github_manager.create_runner_token(),
-            vm_type=vm_type,
             github_organization=self.github_organization,
             installer=installer
         )
-        self.runners[name] = Runner(name=name,
-                                    vm_id=vm_id,
-                                    vm_type=vm_type,
-                                    parent_name=parent_name)
+        runner.vm_id = vm.id
+
+        self.runners[name] = runner
         self.runner_counter += 1
         logger.info("Create success")
+
+    def respawn_replace(self, runner: Runner):
+        if runner.has_child:
+            return
+
+        logger.info(f"respawn runner: {runner.name}")
+        self.openstack_manager.delete_vm(runner.vm_id)
+
+        installer = self.github_manager.link_download_runner()
+        vm = self.openstack_manager.create_vm(
+            runner=runner,
+            runner_token=self.github_manager.create_runner_token(),
+            github_organization=self.github_organization,
+            installer=installer
+        )
+        runner.status_history = []
+        runner.vm_id = vm.id
+
+    def respawn_volume(self, runner: Runner):
+        if runner.has_child:
+            return
+
+        logger.info(f"respawn runner: {runner.name}")
+        self.openstack_manager.detach_volume_from_instance(runner.vm_id)
+        self.openstack_manager.delete_vm(runner.vm_id)
+
+        installer = self.github_manager.link_download_runner()
+        vm, volume = self.openstack_manager.create_vm_volume(
+            runner=runner,
+            runner_token=None,
+            github_organization=self.github_organization,
+            installer=installer
+        )
+        runner.status_history = []
+        runner.vm_id = vm.id
+        runner.volume_id = volume.id
 
     def delete_runner(self, runner: Runner):
         logger.info(f"Deleting {runner.name}: type {runner.vm_type}")
@@ -114,10 +163,14 @@ class RunnerManager(object):
                 self.openstack_manager.delete_vm(runner.vm_id)
                 runner.vm_id = None
 
+            if runner.volume_id:
+                self.openstack_manager.delete_vm_volume(runner.vm_id)
+                runner.volume_id = None
+
             del self.runners[runner.name]
             logger.info("Delete success")
         except APIException:
-            logger.info(f'APIException catch, for runner: {str(runner)}')
+            logger.info(f'APIException catch, when try to delete the runner: {str(runner)}')
 
     def generate_runner_name(self, vm_type: VmType):
         vm_type.tags.sort()
@@ -126,5 +179,4 @@ class RunnerManager(object):
                                               tags='-'.join(vm_type.tags))
 
     def __del__(self):
-        for runner in [elem for elem in self.runners.values()]:
-            self.delete_runner(runner)
+        pass
