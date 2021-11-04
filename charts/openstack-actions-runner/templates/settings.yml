@@ -5,6 +5,7 @@ metadata:
 data:
   settings.yml: |-
     github_organization: {{ .Values.githubOrganization }}
+    github_repo: {{ .Values.githubRepo }}
     cloud_nine_region: {{ .Values.cloudNineRegion }}
     cloud_nine_tenant: {{ .Values.cloudNineTenant }}
     python_config: {{ .Values.pythonConfigModule }}

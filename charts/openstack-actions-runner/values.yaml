@@ -99,6 +99,7 @@ affinity: {}
 
 githubToken: ""
 githubOrganization: ""
+githubRepo: ""
 
 # Cloud nine connection infos
 cloudNineTenant: ""

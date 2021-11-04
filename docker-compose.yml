@@ -1,7 +1,9 @@
 version: "3.9"
 services:
   runner_manager:
-    build: .
+    build:
+      context: .
+      dockerfile: manager.Dockerfile
     command:
       - python3
       - /app/runners_manager/start.py

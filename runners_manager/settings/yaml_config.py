@@ -34,6 +34,7 @@ class RedisDatabase(Schema):
 
 class Settings(Schema):
     github_organization = fields.Str(required=True)
+    github_repo = fields.Str(required=False)
     cloud_nine_region = fields.Str(required=True)
     cloud_nine_tenant = fields.Str(required=True)
     runner_pool = fields.Nested(RunnerPool, many=True, required=True)

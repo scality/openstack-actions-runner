@@ -46,22 +46,29 @@ class OpenstackManager(object):
 
     @staticmethod
     def script_init_runner(runner: Runner, token: int,
-                           github_organization: str, installer: str):
+                           github_organization: str, github_repo: str or None,
+                           installer: str):
         file_loader = FileSystemLoader('templates')
         env = Environment(loader=file_loader)
         env.trim_blocks = True
         env.lstrip_blocks = True
         env.rstrip_blocks = True
 
+        if github_repo:
+            github_url = f"https://github.com/{github_organization}/{github_repo}"
+        else:
+            github_url = f"https://github.com/{github_organization}"
+
         template = env.get_template('init_runner_script.sh')
         output = template.render(installer=installer,
-                                 github_organization=github_organization,
+                                 github_url=github_url,
                                  token=token, name=runner.name, tags=','.join(runner.vm_type.tags),
                                  group='default')
         return output
 
     def create_vm(self, runner: Runner, runner_token: int or None,
-                  github_organization: str, installer: str):
+                  github_organization: str, github_repo: str or None,
+                  installer: str):
         """
         TODO `tenantnetwork1` is a hardcoded network we should put this in config later on
         """
@@ -73,7 +80,7 @@ class OpenstackManager(object):
             flavor=self.nova_client.flavors.find(name=runner.vm_type.flavor),
             security_groups=[sec_group_id], nics=[nic],
             userdata=self.script_init_runner(runner, runner_token, github_organization,
-                                             installer)
+                                             github_repo, installer)
         )
         while instance.status not in ['ACTIVE', 'ERROR']:
             instance = self.nova_client.servers.get(instance.id)

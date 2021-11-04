@@ -33,6 +33,7 @@ def main(settings: dict, args: argparse.Namespace):
                                          password=args.cloud_nine_password,
                                          region=settings['cloud_nine_region'])
     github_manager = GithubManager(organization=settings['github_organization'],
+                                   repo=settings['github_repo'],
                                    token=args.github_token)
     redis_database = redis.Redis(host=settings['redis']['host'],
                                  port=settings['redis']['port'],

@@ -15,6 +15,7 @@ class RunnerFactory(object):
     Create / Delete / replace Runners and Virtual machine from Github and Openstack
     """
     github_organization: str
+    github_repo: str or None
     runner_name_format: str
     runner_counter: int
 
@@ -23,15 +24,21 @@ class RunnerFactory(object):
 
     def __init__(self, openstack_manager: OpenstackManager,
                  github_manager: GithubManager,
-                 organization):
+                 organization, repo):
         """
         This object spawn and delete the runner and spawn the VM
         """
         self.openstack_manager = openstack_manager
         self.github_manager = github_manager
         self.github_organization = organization
-        self.runner_name_format = 'runner-{organization}-{tags}-{index}'
+        self.github_repo = repo
         self.runner_counter = 0
+
+    @property
+    def runner_name_format(self):
+        if self.github_repo:
+            return 'runner-{organization}-{repo}-{tags}-{index}'
+        return 'runner-{organization}-{tags}-{index}'
 
     def create_runner(self, vm_type: VmType):
         logger.info(f"Create new runner for {vm_type}")
@@ -43,6 +50,7 @@ class RunnerFactory(object):
             runner=runner,
             runner_token=self.github_manager.create_runner_token(),
             github_organization=self.github_organization,
+            github_repo=self.github_repo,
             installer=installer
         )
         runner.vm_id = vm.id
@@ -61,6 +69,7 @@ class RunnerFactory(object):
             runner=runner,
             runner_token=runner_token,
             github_organization=self.github_organization,
+            github_repo=self.github_repo,
             installer=installer
         )
         runner.status_history = []
@@ -85,4 +94,5 @@ class RunnerFactory(object):
         vm_type.tags.sort()
         return self.runner_name_format.format(index=self.runner_counter,
                                               organization=self.github_organization,
+                                              repo=self.github_repo,
                                               tags='-'.join(vm_type.tags))
