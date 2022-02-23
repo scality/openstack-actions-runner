@@ -150,15 +150,17 @@ VM id: {instance.id if instance else 'Vm not created'}""")
         try:
             if image_name and 'rhel' in image_name:
                 try:
+                    nb_error = 0
                     self.nova_client.servers.shelve(vm_id)
                     s = self.nova_client.servers.get(vm_id).status
-                    while s not in ['SHUTOFF', 'SHELVED_OFFLOADED']:
+                    while s not in ['SHUTOFF', 'SHELVED_OFFLOADED'] and nb_error < 5:
                         time.sleep(5)
                         try:
                             s = self.nova_client.servers.get(vm_id).status
                             logger.info(s)
                         except Exception as e:
-                            logger.error(f'Error {e}')
+                            nb_error += 1
+                            logger.error(f'Error in VM delete {e}')
 
                 except Exception:
                     pass
