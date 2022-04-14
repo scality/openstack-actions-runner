@@ -14,6 +14,44 @@ sudo -H -u actions bash -c 'mkdir -p /home/actions/.ssh'
 sudo -H -u actions bash -c 'echo "{{ ssh_keys }}" >>  /home/actions/.ssh/authorized_keys'
 {% endif %}
 
+if [ "${LINUX_OS}" = "ubuntu" ]
+then
+sudo apt-get -y update
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+   lsb-release
+elif [ "${LINUX_OS}" = "centos" ]  ||  [ "${LINUX_OS}" = "rocky" ] || [ "${LINUX_OS}" = "almalinux" ]
+then
+sudo yum install -y bind-utils yum-utils
+elif [ "${LINUX_OS}" = "rhel" ]
+then
+sudo bash -c 'cat <<EOF > /etc/systemd/system/redhat_registration.service
+[Unit]
+Description=Redhat registration
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+TimeoutStartSec=300
+ExecStart=/sbin/subscription-manager register --username={{ redhat_username }} --password={{ redhat_password }} --auto-attach
+TimeoutStopSec=300
+ExecStop=-/sbin/subscription-manager unregister
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+sudo chmod 600 /etc/systemd/system/redhat_registration.service
+sudo systemctl daemon-reload
+sudo systemctl enable redhat_registration.service
+sudo systemctl start redhat_registration.service
+else
+echo "OS not managed by the runner-manager"
+exit 1
+fi
+
 {% if not "no-docker" in tags  %}
 if [ "${LINUX_OS}" = "ubuntu" ]
 then
@@ -57,44 +95,6 @@ then
 sudo systemctl start docker
 fi
 {% endif %}
-
-if [ "${LINUX_OS}" = "ubuntu" ]
-then
-sudo apt-get -y update
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y install apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg \
-   lsb-release
-elif [ "${LINUX_OS}" = "centos" ]  ||  [ "${LINUX_OS}" = "rocky" ] || [ "${LINUX_OS}" = "almalinux" ]
-then
-sudo yum install -y bind-utils yum-utils
-elif [ "${LINUX_OS}" = "rhel" ]
-then
-sudo bash -c 'cat <<EOF > /etc/systemd/system/redhat_registration.service
-[Unit]
-Description=Redhat registration
-After=network-online.target
-
-[Service]
-Type=oneshot
-RemainAfterExit=true
-TimeoutStartSec=300
-ExecStart=/sbin/subscription-manager register --username={{ redhat_username }} --password={{ redhat_password }} --auto-attach
-TimeoutStopSec=300
-ExecStop=-/sbin/subscription-manager unregister
-
-[Install]
-WantedBy=multi-user.target
-EOF'
-sudo chmod 600 /etc/systemd/system/redhat_registration.service
-sudo systemctl daemon-reload
-sudo systemctl enable redhat_registration.service
-sudo systemctl start redhat_registration.service
-else
-echo "OS not managed by the runner-manager"
-exit 1
-fi
 
 sudo -H -u actions bash -c 'mkdir -p /home/actions/actions-runner'
 sudo -H -u actions bash -c 'cd /home/actions/actions-runner && curl -O -L {{ installer["download_url"] }} && tar xzf ./{{ installer["filename"] }}'
