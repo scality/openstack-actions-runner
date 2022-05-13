@@ -11,9 +11,8 @@ import novaclient.v2.servers
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from runners_manager.monitoring.prometheus import metrics
-from runners_manager.runner.Runner import Runner
 from runners_manager.vm_creation.CloudManager import CloudManager
-from runners_manager.vm_creation.openstack.schema import OpenstackConfig
+from runners_manager.vm_creation.openstack.schema import OpenstackConfig, OpenstackRunner
 
 
 logger = logging.getLogger("runner_manager")
@@ -81,7 +80,7 @@ class OpenstackManager(CloudManager):
         )
 
     def script_init_runner(
-        self, runner: Runner, token: int, github_organization: str, installer: str
+        self, runner: OpenstackRunner, token: int, github_organization: str, installer: str
     ):
         """
         Return the needed script by the virutal machines to run smoothly the Github runner
@@ -107,25 +106,28 @@ class OpenstackManager(CloudManager):
         )
         return output
 
-    def get_all_vms(self, organization: str) -> [str]:
+    def get_all_vms(self, organization: str) -> list[OpenstackRunner]:
         """
         Return the list of virtual machines releated to Github runner
         """
-        return [
-            vm
-            for vm in self.nova_client.servers.list(sort_keys=["created_at"])
-            if vm.name.startswith(f"runner-{organization}")
-        ]
+        runners: list[OpenstackRunner] = []
+        for vm in self.nova_client.servers.list(sort_keys=["created_at"]):
+            if vm.name.startswith(f"runner-{organization}"):
+                runners.append(OpenstackRunner().load(
+                    name=vm.name,
+                    vm_id=vm.id,
+                ))
+        return runners
 
     @metrics.runner_creation_time_seconds.time()
     def create_vm(
         self,
-        runner: Runner,
+        runner: OpenstackRunner,
         runner_token: int or None,
         github_organization: str,
         installer: str,
         call_number=0,
-    ):
+    ) -> OpenstackRunner:
         """
         TODO `tenantnetwork1` is a hardcoded network we should put this in config later on
         Every call with nova_client looks very unstable.
@@ -156,8 +158,8 @@ class OpenstackManager(CloudManager):
                 "id"
             ]
             nic = {"net-id": net}
-            image = self.nova_client.glance.find_image(runner.vm_type.image)
-            flavor = self.nova_client.flavors.find(name=runner.vm_type.flavor)
+            image = self.nova_client.glance.find_image(runner.vm_type.config["image"])
+            flavor = self.nova_client.flavors.find(name=runner.vm_type.config["flavor"])
 
             instance = self.nova_client.servers.create(
                 name=runner.name,
@@ -169,6 +171,7 @@ class OpenstackManager(CloudManager):
                     runner, runner_token, github_organization, installer
                 ),
             )
+            runner.vm_id = instance.id
 
             while instance.status not in ["ACTIVE", "ERROR"]:
                 instance = self.nova_client.servers.get(instance.id)
@@ -176,7 +179,7 @@ class OpenstackManager(CloudManager):
 
             if instance.status == "ERROR":
                 logger.info("vm failed, creating a new one")
-                self.delete_vm(instance.id)
+                self.delete_vm(runner)
                 time.sleep(2)
                 metrics.runner_creation_failed.inc()
                 return self.create_vm(
@@ -200,21 +203,21 @@ VM id: {instance.id if instance else 'Vm not created'}"""
             )
 
         logger.info("vm is successfully created")
-        return instance
+        return runner
 
     @metrics.runner_delete_time_seconds.time()
-    def delete_vm(self, vm_id: str, image_name=None):
+    def delete_vm(self, runner: OpenstackRunner):
         """
         Delete a vm synchronously  if there is a running loop or normally if it can't
         """
         try:
             asyncio.get_running_loop().run_in_executor(
-                None, self.async_delete_vm, vm_id, image_name
+                None, self.async_delete_vm, runner
             )
         except RuntimeError:
-            self.async_delete_vm(vm_id, image_name)
+            self.async_delete_vm(runner.vm_id, runner.config['image'])
 
-    def async_delete_vm(self, vm_id: str, image_name):
+    def async_delete_vm(self, runner: OpenstackRunner):
         """
         If the image name is a rhel shelve, so we have a clean poweroff and
             the VM can un subscribe its certificate by its own.
@@ -222,15 +225,15 @@ VM id: {instance.id if instance else 'Vm not created'}"""
         Then delete the virtual machin
         """
         try:
-            if image_name and "rhel" in image_name:
+            if runner.config['image'] and "rhel" in runner.config['image']:
                 try:
                     nb_error = 0
-                    self.nova_client.servers.shelve(vm_id)
-                    s = self.nova_client.servers.get(vm_id).status
+                    self.nova_client.servers.shelve(runner.vm_id)
+                    s = self.nova_client.servers.get(runner.vm_id).status
                     while s not in ["SHUTOFF", "SHELVED_OFFLOADED"] and nb_error < 5:
                         time.sleep(5)
                         try:
-                            s = self.nova_client.servers.get(vm_id).status
+                            s = self.nova_client.servers.get(runner.vm_id).status
                             logger.info(s)
                         except Exception as e:
                             nb_error += 1
@@ -239,7 +242,7 @@ VM id: {instance.id if instance else 'Vm not created'}"""
                 except Exception:
                     pass
 
-            self.nova_client.servers.delete(vm_id)
+            self.nova_client.servers.delete(runner.vm_id)
         except novaclient.exceptions.NotFound as exp:
             # If the machine was already deleted, move along
             logger.info(exp)

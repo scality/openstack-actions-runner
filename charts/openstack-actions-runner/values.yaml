@@ -119,19 +119,21 @@ pythonConfigModule: ''
 
 # Represent the infos about each group of runners
 # Define by:
-#  - There openstack Flavor and image name
+#  - There config depending on the cloud backend, per example:
+#    for openstack, the Flavor and image name is required
 #  - The quantity allowed to spawn at the same time
 #  - The tags use by github actions
 # Example:
-#  runner_pool:
-#    - flavor: 'm1.small'
-#      image: 'CentOS 7 (PVHVM)'
-#      quantity:
-#        min: 2
-#        max: 4
-#      tags:
-#        - centos7
-#        - small
+# runner_pool:
+#   - config:
+#       flavor: 'm1.small'
+#       image: 'CentOS 7 (PVHVM)'
+#     quantity:
+#       min: 2
+#       max: 4
+#     tags:
+#       - centos7
+#       - small
 runnerPool: []
 
 extraRunnerTimer:

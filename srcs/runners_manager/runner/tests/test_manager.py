@@ -53,28 +53,31 @@ class TestRunnerManager(unittest.TestCase):
     @patch('runners_manager.runner.Manager.RunnerManager')
     @patch('runners_manager.runner.Manager.RunnerFactory')
     def test_config_vm_type(self, factory, manager):
-        r = Manager({'github_organization': 'test',
-                     'runner_pool': [{
-                         'tags': ['centos7', 'small'],
-                         'flavor': 'm1.small',
-                         'image': 'CentOS 7 (PVHVM)',
-                         'quantity': {
-                             'min': 2,
-                             'max': 4
-                         },
-                     }],
-                     'redis': {
-                         'host': 'test',
-                         'port': 1234
-                     },
-                     'extra_runner_timer': {
-                         'minutes': 10,
-                         'hours': 10
-                     },
-                     'timeout_runner_timer': {
-                         'minutes': 10,
-                         'hours': 10
-                     }}, self.cloud_manager, self.github_manager, self.fake_redis)
+        r = Manager({
+            'github_organization': 'test',
+            'runner_pool': [{
+                'tags': ['centos7', 'small'],
+                'config': {
+                    'flavor': 'm1.small',
+                    'image': 'CentOS 7 (PVHVM)',
+                },
+                'quantity': {
+                    'min': 2,
+                    'max': 4
+                },
+            }],
+            'redis': {
+                'host': 'test',
+                'port': 1234
+            },
+            'extra_runner_timer': {
+                'minutes': 10,
+                'hours': 10
+            },
+            'timeout_runner_timer': {
+                'minutes': 10,
+                'hours': 10
+            }}, self.cloud_manager, self.github_manager, self.fake_redis)
         self.assertEqual(r.runner_managers.__len__(), 1)
 
     @patch('runners_manager.runner.Manager.RunnerManager.__init__', return_value=None)
@@ -88,28 +91,31 @@ class TestRunnerManager(unittest.TestCase):
     @patch('runners_manager.runner.Manager.Manager.log_runners_infos')
     @patch('runners_manager.runner.Manager.RunnerFactory')
     def test_update_without_changes(self, *args, **kwargs):
-        r = Manager({'github_organization': 'test',
-                     'runner_pool': [{
-                         'tags': ['centos7', 'small'],
-                         'flavor': 'm1.small',
-                         'image': 'CentOS 7 (PVHVM)',
-                         'quantity': {
-                             'min': 2,
-                             'max': 4
-                         },
-                     }],
-                     'redis': {
-                         'host': 'test',
-                         'port': 1234
-                     },
-                     'extra_runner_timer': {
-                         'minutes': 10,
-                         'hours': 10
-                     },
-                     'timeout_runner_timer': {
-                         'minutes': 10,
-                         'hours': 10
-                     }}, self.cloud_manager, self.github_manager, self.fake_redis)
+        r = Manager({
+            'github_organization': 'test',
+            'runner_pool': [{
+                'tags': ['centos7', 'small'],
+                'config': {
+                    'flavor': 'm1.small',
+                    'image': 'CentOS 7 (PVHVM)',
+                },
+                'quantity': {
+                    'min': 2,
+                    'max': 4
+                },
+            }],
+            'redis': {
+                'host': 'test',
+                'port': 1234
+            },
+            'extra_runner_timer': {
+                'minutes': 10,
+                'hours': 10
+            },
+            'timeout_runner_timer': {
+                'minutes': 10,
+                'hours': 10
+            }}, self.cloud_manager, self.github_manager, self.fake_redis)
         r.update_all_runners([{'id': 1, 'name': '1',
                                'os': 'linux', 'status': 'online',
                                'busy': False,

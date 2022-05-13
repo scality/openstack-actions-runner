@@ -44,8 +44,9 @@ cloud_nine_tenant: "tenant.name"
 Create a runner pool with the desired specs
 ```yaml
 runner_pool:
-  - flavor: 'm1.small'
-    image: 'bionic-server-cloudimg-amd64_20181011.qcow2'
+  - config:
+      flavor: 'm1.small'
+      image: 'bionic-server-cloudimg-amd64_20181011.qcow2'
     quantity:
       min: 2
       max: 10

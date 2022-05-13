@@ -28,8 +28,10 @@ class TestRunnerManager(unittest.TestCase):
         self.vm_type_normal = VmType(
             {
                 "tags": ["centos7", "small"],
-                "flavor": "m1.small",
-                "image": "CentOS 7 (PVHVM)",
+                "config": {
+                    "flavor": "m1.small",
+                    "image": "CentOS 7 (PVHVM)",
+                },
                 "quantity": {"min": 2, "max": 4},
             }
         )
@@ -37,8 +39,10 @@ class TestRunnerManager(unittest.TestCase):
         self.vm_type_full = VmType(
             {
                 "tags": ["centos7", "small"],
-                "flavor": "m1.small",
-                "image": "CentOS 7 (PVHVM)",
+                "config": {
+                    "flavor": "m1.small",
+                    "image": "CentOS 7 (PVHVM)",
+                },
                 "quantity": {"min": 4, "max": 4},
             }
         )

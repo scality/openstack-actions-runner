@@ -81,7 +81,7 @@ class RunnerFactory(object):
 
     def respawn_replace(self, runner: Runner):
         logger.info(f"respawn runner: {runner.name}")
-        self.cloud_manager.delete_vm(runner.vm_id, runner.vm_type.image)
+        self.cloud_manager.delete_vm(runner)
 
         try:
             asyncio.get_running_loop().run_in_executor(
@@ -102,7 +102,7 @@ class RunnerFactory(object):
                 self.github_manager.force_delete_runner(runner.action_id)
 
             if runner.vm_id:
-                self.cloud_manager.delete_vm(runner.vm_id, runner.vm_type.image)
+                self.cloud_manager.delete_vm(runner)
 
             logger.info("Delete success")
         except APIException:

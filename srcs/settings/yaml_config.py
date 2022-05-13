@@ -32,8 +32,7 @@ class RunnerQuantity(Schema):
 
 class RunnerPool(Schema):
     tags = fields.List(fields.Str(), required=True)
-    flavor = fields.Str(required=True)
-    image = fields.Str(required=True)
+    config = fields.Dict(required=True)
     quantity = fields.Nested(RunnerQuantity, required=True)
 
 

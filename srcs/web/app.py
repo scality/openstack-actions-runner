@@ -25,18 +25,17 @@ def delete_orphan_runners():
     """
     logger.info("list not tracked VM")
     gh_runners = [elem['id'] for elem in github_manager.get_runners()['runners']]
-    server_list = [(vm.id, vm.flavor, vm.name)
-                   for vm in cloud_manager.get_all_vms(github_manager.organization)]
+    server_list = [runner for runner in cloud_manager.get_all_vms(github_manager.organization)]
 
     rd_runners = []
     for m in runner_m.runner_managers:
         rd_runners += m.get_runners().values()
 
-    for server_id, flavor, name in server_list:
-        if not next(filter(lambda r: r.vm_id == server_id, rd_runners), None):
-            logger.info(f'VM {server_id} deleted')
+    for server in server_list:
+        if not next(filter(lambda r: r.vm_id == server.vm_id, rd_runners), None):
+            logger.info(f'VM {server.vm_id} deleted')
             metrics.runner_vm_orphan_delete.inc()
-            cloud_manager.delete_vm(server_id, flavor)
+            cloud_manager.delete_vm(server)
 
     for runner_id in gh_runners:
         if not next(filter(lambda r: r.action_id == runner_id, rd_runners), None):

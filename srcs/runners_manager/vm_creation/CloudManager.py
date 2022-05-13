@@ -28,7 +28,7 @@ class CloudManager(abc.ABC):
         self.redhat_password = redhat_password
 
     @abc.abstractmethod
-    def get_all_vms(self, organization: str) -> [str]:
+    def get_all_vms(self, organization: str) -> list[Runner]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -43,7 +43,7 @@ class CloudManager(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_vm(self, vm_id: str, image_name=None):
+    def delete_vm(self, runner: Runner):
         raise NotImplementedError
 
     @abc.abstractmethod

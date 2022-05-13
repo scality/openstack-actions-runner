@@ -16,8 +16,6 @@ class Metrics(object):
     def __init__(self):
         self.common_labels = [
             'name',
-            'flavor',
-            'image',
         ]
 
         self.runner_vm_orphan_delete = Gauge(

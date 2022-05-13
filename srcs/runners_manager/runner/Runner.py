@@ -21,9 +21,9 @@ class Runner(object):
 
     action_id: int or None
     vm_id: str or None
-    vm_type: VmType
+    vm_type: VmType or None
 
-    def __init__(self, name: str, vm_id: str or None, vm_type: VmType):
+    def __init__(self, name: str, vm_id: str or None, vm_type: VmType or None):
         self.name = name
         self.vm_id = vm_id
         self.vm_type = vm_type
@@ -120,12 +120,12 @@ class Runner(object):
         self.status = status
 
         metrics.runner_status.labels(
-            name=self.name, flavor=self.vm_type.flavor, image=self.vm_type.image
+            name=self.name
         ).state(self.status)
 
         if self.status == "deleting":
             metrics.runner_status.remove(
-                self.name, self.vm_type.flavor, self.vm_type.image
+                self.name
             )
 
     def update_from_github(self, github_runner: dict):
