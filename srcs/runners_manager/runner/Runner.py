@@ -23,10 +23,13 @@ class Runner(object):
     vm_id: str or None
     vm_type: VmType or None
 
-    def __init__(self, name: str, vm_id: str or None, vm_type: VmType or None):
+    def __init__(
+        self, name: str, vm_id: str or None, vm_type: VmType or None, cloud: str or None
+    ):
         self.name = name
         self.vm_id = vm_id
         self.vm_type = vm_type
+        self.cloud = cloud
 
         self.created_at = datetime.datetime.now()
         self.status = "offline"
@@ -57,7 +60,9 @@ class Runner(object):
         :param dict:
         :return:
         """
-        runner = Runner(data["name"], data["vm_id"], VmType(data["vm_type"]))
+        runner = Runner(
+            data["name"], data["vm_id"], VmType(data["vm_type"]), data["cloud"]
+        )
 
         runner.status = data["status"]
         runner.status_history = data["status_history"]
@@ -85,6 +90,7 @@ class Runner(object):
             "status_history",
             "action_id",
             "vm_id",
+            "cloud",
         ]
         d = {"vm_type": self.vm_type.toJson(), "created_at": str(self.created_at)}
         if self.started_at:
@@ -120,12 +126,14 @@ class Runner(object):
         self.status = status
 
         metrics.runner_status.labels(
-            name=self.name
+            name=self.name,
+            cloud=self.cloud,
         ).state(self.status)
 
         if self.status == "deleting":
             metrics.runner_status.remove(
-                self.name
+                self.name,
+                self.cloud,
             )
 
     def update_from_github(self, github_runner: dict):

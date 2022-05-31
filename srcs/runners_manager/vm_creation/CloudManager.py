@@ -3,6 +3,7 @@ import abc
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from marshmallow import Schema
+from runners_manager.monitoring.prometheus import metrics
 from runners_manager.runner.Runner import Runner
 
 
@@ -34,6 +35,29 @@ class CloudManager(abc.ABC):
     def get_all_vms(self, prefix: str) -> list[Runner]:
         raise NotImplementedError
 
+    def create_vm_metric(func):
+        def _decorator(self, *args, **kwargs):
+            if "runner" in kwargs.keys():
+                runner: Runner = kwargs["runner"]
+                with metrics.runner_creation_time_seconds.labels(
+                    name=runner.name, cloud=self.name
+                ).time():
+                    return func(self, *args, **kwargs)
+
+        return _decorator
+
+    def delete_vm_metric(func):
+        def _decorator(self, *args, **kwargs):
+            if "runner" in kwargs.keys():
+                runner: Runner = kwargs["runner"]
+                with metrics.runner_delete_time_seconds.labels(
+                    name=runner.name, cloud=self.name
+                ).time():
+                    return func(self, *args, **kwargs)
+
+        return _decorator
+
+    @create_vm_metric
     @abc.abstractmethod
     def create_vm(
         self,
@@ -45,6 +69,7 @@ class CloudManager(abc.ABC):
     ) -> int or None:
         raise NotImplementedError
 
+    @delete_vm_metric
     @abc.abstractmethod
     def delete_vm(self, runner: Runner):
         raise NotImplementedError

@@ -42,13 +42,17 @@ def delete_orphan_runners():
         for server in server_list:
             if not next(filter(lambda r: r.vm_id == server.vm_id, rd_runners), None):
                 logger.info(f"VM {server.vm_id} deleted")
-                metrics.runner_vm_orphan_delete.inc()
+                metrics.runner_vm_orphan_delete.labels(
+                    cloud=cloud_manager.name, name=server.name
+                ).inc()
                 cloud_manager.delete_vm(server)
 
         for runner_id, runner_name in gh_runners:
             if not next(filter(lambda r: r.name == runner_name, rd_runners), None):
                 logger.info(f"self-hosted {runner_name} deleted")
-                metrics.runner_github_orphan_delete.inc()
+                metrics.runner_github_orphan_delete.labels(
+                    cloud=cloud_manager.name, name=runner_name
+                ).inc()
                 github_manager.force_delete_runner(runner_id)
     except Exception as e:
         logger.error(f"error type {type(e)}")

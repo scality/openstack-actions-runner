@@ -69,8 +69,9 @@ class RunnerFactory(object):
     def create_runner(self, vm_type: VmType) -> Runner:
         logger.info(f"Create new runner for {vm_type}")
         name = self.generate_runner_name(vm_type)
-        runner = Runner(name=name, vm_id=None, vm_type=vm_type)
-
+        runner = Runner(
+            name=name, vm_id=None, vm_type=vm_type, cloud=self.cloud_manager.name
+        )
         try:
             asyncio.get_running_loop().run_in_executor(
                 None, self.async_create_vm, runner
@@ -98,6 +99,7 @@ class RunnerFactory(object):
 
     def delete_runner(self, runner: Runner):
         logger.info(f"Deleting {runner.name}: type {runner.vm_type}")
+
         try:
             if runner.action_id:
                 self.github_manager.force_delete_runner(runner.action_id)

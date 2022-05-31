@@ -1,52 +1,66 @@
 """Global class to handle all Prometheus metrics."""
-
 import os
 
-from prometheus_client import Enum, Gauge
-from prometheus_client import (CONTENT_TYPE_LATEST, REGISTRY,
-                               CollectorRegistry, generate_latest)
-
-from prometheus_client.multiprocess import MultiProcessCollector
 from fastapi.requests import Request
 from fastapi.responses import Response
+from prometheus_client import CollectorRegistry
+from prometheus_client import CONTENT_TYPE_LATEST
+from prometheus_client import Enum
+from prometheus_client import Gauge
+from prometheus_client import generate_latest
+from prometheus_client import REGISTRY
+from prometheus_client.multiprocess import MultiProcessCollector
 
 
 class Metrics(object):
-
     def __init__(self):
-        self.common_labels = [
-            'name',
+        self.default_labels = [
+            "name",
+            "cloud",
         ]
 
         self.runner_vm_orphan_delete = Gauge(
-            'openstack_actions_runner_vm_orphan_delete',
-            'Metrics displaying the number of vm not tracked deleted',
+            "runner_manager_vm_orphan_delete",
+            "Metrics displaying the number of vm not tracked deleted",
+            labelnames=self.default_labels,
         )
 
         self.runner_github_orphan_delete = Gauge(
-            'openstack_actions_runner_github_orphan_delete',
-            'Metrics displaying the number of vm not tracked deleted',
+            "runner_manager_github_orphan_delete",
+            "Metrics displaying the number of vm not tracked deleted",
+            labelnames=self.default_labels,
         )
 
         self.runner_status = Enum(
-            'openstack_actions_runner_status', 'Metrics displaying the status of a runner',
-            states=['creating', 'deleting', 'respawning', 'online', 'running', 'offline'],
-            labelnames=self.common_labels,
+            "runner_manager_runner_status",
+            "Metrics displaying the status of a runner",
+            states=[
+                "creating",
+                "deleting",
+                "respawning",
+                "online",
+                "running",
+                "offline",
+            ],
+            labelnames=self.default_labels,
         )
 
         self.runner_creation_failed = Gauge(
-            'openstack_action_runner_creation_failed',
-            'Metrics display the number runners creations failed because of VM creation errors'
+            "runner_manager_runner_creation_failed",
+            "Metrics display the number runners creations failed because of VM creation errors",
+            labelnames=self.default_labels,
         )
 
         self.runner_creation_time_seconds = Gauge(
-            'openstack_actions_runner_resource_creation_time',
-            'Metrics displaying the time to create the runner resource',
+            "runner_manager_resource_creation_time",
+            "Metrics displaying the time to create the runner resource",
+            labelnames=self.default_labels,
         )
 
         self.runner_delete_time_seconds = Gauge(
-            'openstack_actions_runner_resource_delete_time',
-            'Metrics displaying the time to delete the runner resource',
+            "runner_manager_resource_delete_time",
+            "Metrics displaying the time to delete the runner resource",
+            labelnames=self.default_labels,
         )
 
 
@@ -58,8 +72,7 @@ def prometheus_metrics(request: Request) -> Response:
         registry = REGISTRY
 
     return Response(
-        generate_latest(registry),
-        headers={"Content-Type": CONTENT_TYPE_LATEST}
+        generate_latest(registry), headers={"Content-Type": CONTENT_TYPE_LATEST}
     )
 
 

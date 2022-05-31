@@ -49,8 +49,8 @@ class TestRunnerManager(unittest.TestCase):
 
     def test_init_runner_manager(self):
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_normal),
-            Runner("1", None, self.vm_type_normal),
+            Runner("0", None, self.vm_type_normal, "cloud"),
+            Runner("1", None, self.vm_type_normal, "cloud"),
         ]
         r = RunnerManager(self.vm_type_normal, self.factory, self.fake_redis)
 
@@ -60,9 +60,9 @@ class TestRunnerManager(unittest.TestCase):
 
     def test_update_runner(self):
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_normal),
-            Runner("1", None, self.vm_type_normal),
-            Runner("2", None, self.vm_type_normal),
+            Runner("0", None, self.vm_type_normal, "cloud"),
+            Runner("1", None, self.vm_type_normal, "cloud"),
+            Runner("2", None, self.vm_type_normal, "cloud"),
         ]
         r = RunnerManager(self.vm_type_normal, self.factory, self.fake_redis)
         r.create_runner()
@@ -120,9 +120,9 @@ class TestRunnerManager(unittest.TestCase):
 
     def test_need_new_runner_current_updated(self):
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_normal),
-            Runner("1", None, self.vm_type_normal),
-            Runner("2", None, self.vm_type_normal),
+            Runner("0", None, self.vm_type_normal, "cloud"),
+            Runner("1", None, self.vm_type_normal, "cloud"),
+            Runner("2", None, self.vm_type_normal, "cloud"),
         ]
         r = RunnerManager(self.vm_type_normal, self.factory, self.fake_redis)
         r.create_runner()
@@ -149,10 +149,10 @@ class TestRunnerManager(unittest.TestCase):
 
     def test_need_new_runner_current_full(self):
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_full),
-            Runner("1", None, self.vm_type_full),
-            Runner("2", None, self.vm_type_full),
-            Runner("3", None, self.vm_type_full),
+            Runner("0", None, self.vm_type_full, "cloud"),
+            Runner("1", None, self.vm_type_full, "cloud"),
+            Runner("2", None, self.vm_type_full, "cloud"),
+            Runner("3", None, self.vm_type_full, "cloud"),
         ]
         r = RunnerManager(self.vm_type_full, self.factory, self.fake_redis)
         r.create_runner()
@@ -167,10 +167,10 @@ class TestRunnerManager(unittest.TestCase):
 
     def test_runners_syncronisation(self):
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_full),
-            Runner("1", None, self.vm_type_full),
-            Runner("2", None, self.vm_type_full),
-            Runner("3", None, self.vm_type_full),
+            Runner("0", None, self.vm_type_full, "cloud"),
+            Runner("1", None, self.vm_type_full, "cloud"),
+            Runner("2", None, self.vm_type_full, "cloud"),
+            Runner("3", None, self.vm_type_full, "cloud"),
         ]
         r = RunnerManager(self.vm_type_full, self.factory, self.fake_redis)
         r.create_runner()
@@ -185,8 +185,8 @@ class TestRunnerManager(unittest.TestCase):
     def test_runner_status(self):
         """Ensure runner status is updated accordingly"""
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_normal),
-            Runner("1", None, self.vm_type_normal),
+            Runner("0", None, self.vm_type_normal, "cloud"),
+            Runner("1", None, self.vm_type_normal, "cloud"),
         ]
         r = RunnerManager(self.vm_type_normal, self.factory, self.fake_redis)
 
@@ -198,7 +198,7 @@ class TestRunnerManager(unittest.TestCase):
 
         # Ensure Prometheus metrics are set accordingly
         for sample in metrics.runner_status.collect()[0].samples:
-            if sample.labels["openstack_actions_runner_status"] == "creating":
+            if sample.labels["runner_manager_runner_status"] == "creating":
                 self.assertEqual(sample.value, 1)
 
         r.update_runners(
@@ -214,12 +214,12 @@ class TestRunnerManager(unittest.TestCase):
         for sample in metrics.runner_status.collect()[0].samples:
             if (
                 sample.labels["name"] == "0"
-                and sample.labels["openstack_actions_runner_status"] == "online"
+                and sample.labels["runner_manager_runner_status"] == "online"
             ):
                 self.assertEqual(sample.value, 1)
             elif (
                 sample.labels["name"] == "1"
-                and sample.labels["openstack_actions_runner_status"] == "running"
+                and sample.labels["runner_manager_runner_status"] == "running"
             ):
                 self.assertEqual(sample.value, 1)
 
@@ -229,7 +229,7 @@ class TestRunnerManager(unittest.TestCase):
         for sample in metrics.runner_status.collect()[0].samples:
             if (
                 sample.labels["name"] == "0"
-                and sample.labels["openstack_actions_runner_status"] == "respawning"
+                and sample.labels["runner_manager_runner_status"] == "respawning"
             ):
                 self.assertEqual(sample.value, 1)
 
@@ -238,9 +238,9 @@ class TestRunnerManager(unittest.TestCase):
 
     def test_runners_not_listed_on_github(self):
         self.factory.create_runner.side_effect = [
-            Runner("0", None, self.vm_type_normal),
-            Runner("1", None, self.vm_type_normal),
-            Runner("2", None, self.vm_type_normal),
+            Runner("0", None, self.vm_type_normal, "cloud"),
+            Runner("1", None, self.vm_type_normal, "cloud"),
+            Runner("2", None, self.vm_type_normal, "cloud"),
         ]
         r = RunnerManager(self.vm_type_normal, self.factory, self.fake_redis)
         r.create_runner()

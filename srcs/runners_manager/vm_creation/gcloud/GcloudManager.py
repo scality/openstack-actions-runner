@@ -15,6 +15,7 @@ from google.cloud.compute import Operation
 from google.cloud.compute import ServiceAccount
 from google.cloud.compute import Tags
 from google.cloud.compute import ZoneOperationsClient
+from runners_manager.monitoring.prometheus import metrics
 from runners_manager.runner.Runner import Runner
 from runners_manager.runner.Runner import VmType
 from runners_manager.vm_creation.CloudManager import CloudManager
@@ -133,6 +134,9 @@ class GcloudManager(CloudManager):
 
             return operation.target_id
         except Exception as e:
+            metrics.runner_creation_failed.labels(
+                name=runner.name, cloud=self.name
+            ).inc()
             logger.error(e)
             raise e
 
@@ -169,6 +173,7 @@ class GcloudManager(CloudManager):
                                 "quantity": {},
                             }
                         ),
+                        self.name,
                     )
                 )
         logger.info(
