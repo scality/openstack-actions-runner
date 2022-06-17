@@ -87,4 +87,4 @@ jobs:
       - run: helm lint charts/openstack-actions-runner
       - run: poetry run pytest --cov=. --cov-report=xml
       - name: Upload test coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
