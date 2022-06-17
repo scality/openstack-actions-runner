@@ -1267,11 +1267,11 @@ simplejson = ">=3.5.1"
 
 [[package]]
 name = "python-novaclient"
-version = "17.4.0"
+version = "18.0.0"
 description = "Client library for OpenStack Compute API"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 
 [package.dependencies]
 iso8601 = ">=0.1.11"
@@ -1566,7 +1566,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "5f2fbe4dbf32111de100b195d80a489747f80dff7231d69cd6284c84d8249743"
+content-hash = "96d809a9fc110a4ab6ddaaed19b7283c64733dce04a42ccadf1d061a1610963d"
 
 [metadata.files]
 aiofiles = [
@@ -2411,8 +2411,8 @@ python-neutronclient = [
     {file = "python_neutronclient-7.3.0-py3-none-any.whl", hash = "sha256:5f02bfc5a2f9f738b2d70d82ec70d78de3b7695c33ee6c4ee8cae406b57f8464"},
 ]
 python-novaclient = [
-    {file = "python-novaclient-17.4.0.tar.gz", hash = "sha256:bca1a3899c0ecf0f63a9b3e97c5d56557186bece1e2a585b26d7c5727d461822"},
-    {file = "python_novaclient-17.4.0-py3-none-any.whl", hash = "sha256:47c33f896d72ce7229d82c9aa77db2dda89543688494a2d0b9d7c9815878af7b"},
+    {file = "python-novaclient-18.0.0.tar.gz", hash = "sha256:e9eb2a9bdba464d820c100775c3c2f6493088df66af13dfb9325cc6b865c8d23"},
+    {file = "python_novaclient-18.0.0-py3-none-any.whl", hash = "sha256:32aa01da5c1c404de2948915bc626d88c690d2ec26134892a410a42a15a8778d"},
 ]
 pytz = [
     {file = "pytz-2022.1-py2.py3-none-any.whl", hash = "sha256:e68985985296d9a66a881eb3193b0906246245294a881e7c8afe623866ac6a5c"},
