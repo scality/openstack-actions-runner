@@ -32,7 +32,7 @@ aiofiles = "^0.8.0"
 [tool.poetry.dev-dependencies]
 mock = "4.0.3"
 flake8 = "3.9.2"
-fakeredis = "1.6.0"
+fakeredis = "1.9.0"
 pytest = "^6.2.5"
 docker-compose = "^1.29.2"
 pytest-cov = "^3.0.0"
